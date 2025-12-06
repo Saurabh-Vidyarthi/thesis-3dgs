@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Real-Time Dynamic 3DGS | Thesis Project</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      line-height: 1.6;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h1, h2, h3 {
+      color: #004080;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      margin: 1rem 0;
+      border: 1px solid #ddd;
+    }
+    code {
+      background-color: #f3f3f3;
+      padding: 0.2em 0.4em;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>3D Gaussian Splatting for Real-Time Tracking of Dynamic Objects Using a Monocular Camera</h1>
+  <p><strong>M.Tech Thesis – Indian Institute of Science (IISc), Bangalore</strong><br />
+    <strong>Author:</strong> Saurabh K R Vidyarthi</p>
+
+  <h2>Motivation and Problem</h2>
+  <p>
+    Static 3D scene representations are not sufficient for real-time robotic navigation and digital twins.
+    Existing methods for dynamic 3D scene reconstruction (e.g., dynamic 3D Gaussian Splatting) require
+    hours of retraining even for minor motion updates. This is not practical for real-world applications.
+  </p>
+
+  <h2>Key Idea</h2>
+  <p>
+    We propose a training-free method to update only the <strong>poses of dynamic Gaussians</strong> within a 3DGS scene
+    using monocular camera input. Appearance parameters are preserved. The update is fast and
+    runs in real time, creating a dynamic digital twin that can be used by mobile robots.
+  </p>
+
+  <h2>Pipeline Overview</h2>
+  <img src="pipeline_diagram.png" alt="Pipeline Diagram" />
+  <p>
+    The pipeline includes semantic injection via Gradient Backprojection, object detection using YOLO,
+    monocular depth estimation via MoGe, and rigid-body transform computation to update only the dynamic
+    subset of Gaussians in real time.
+  </p>
+
+  <h2>Runtime Object Tracking</h2>
+  <ul>
+    <li><strong>YOLO</strong> is used to detect dynamic entities in both rendered and live camera frames.</li>
+    <li><strong>MoGe</strong> converts 2D detections to 3D point clouds.</li>
+    <li><strong>Rigid transformation</strong> is computed between point clouds and applied to corresponding Gaussians.</li>
+  </ul>
+
+  <h2>Results</h2>
+  <img src="results_examples.png" alt="Qualitative Results" />
+  <p>
+    Updates complete within ~5 seconds per frame (on RTX A6000). No re-optimization of appearance.
+    Dynamic Gaussians remain visually aligned with real-world objects while static Gaussians are untouched.
+  </p>
+
+  <h2>Contributions</h2>
+  <ul>
+    <li>First real-time pose-only dynamic 3DGS pipeline requiring <strong>no retraining</strong></li>
+    <li>Semantic injection to isolate and track dynamic Gaussians only</li>
+    <li>Monocular 3D tracking using MoGe + YOLO</li>
+    <li>High-fidelity, drift-free dynamic updates for digital twin applications</li>
+  </ul>
+
+  <h2>Application Domains</h2>
+  <p>
+    Robotic navigation, factory automation, digital twins, AR/VR mixed reality, remote monitoring.
+  </p>
+
+  <p>
+    <em>To see code and source implementation, visit:</em><br />
+    <a href="https://github.com/Saurabh-Vidyarthi/thesis-3dgs">https://github.com/Saurabh-Vidyarthi/thesis-3dgs</a>
+  </p>
+</body>
+</html>
