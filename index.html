@@ -3,64 +3,91 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Gaussian Splatting - Real-Time Pose Estimation</title>
+  <title>Real-Time Tracking of Dynamic Objects Using 3D Gaussian Splatting</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 40px auto;
-      max-width: 1000px;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 20px;
       line-height: 1.6;
-      color: #222;
     }
     h1, h2, h3 {
-      color: #003366;
+      color: #0a2f44;
     }
     img {
       max-width: 100%;
-      display: block;
       margin: 1rem 0;
-      border: 1px solid #ddd;
     }
     .caption {
       font-size: 0.9em;
-      color: #666;
       text-align: center;
-      margin-top: -10px;
+      color: #666;
+    }
+    code {
+      background: #f4f4f4;
+      padding: 2px 4px;
     }
   </style>
 </head>
 <body>
-  <h1>3D Gaussian Splatting for Real-Time Pose Estimation and Tracking of Dynamic Objects</h1>
-  <p><strong>Authors:</strong> Saurabh Vidyarthi, Joji Joseph, Siddharth S Desai, Sahil Bobade, Bharadwaj Amrutur<br>
-  <strong>Institute:</strong> Indian Institute of Science, Bangalore, India</p>
+  <h1>3D Gaussian Splatting for Real-Time Tracking of Dynamic Objects Using Monocular View</h1>
+  <p><strong>Authors:</strong> Saurabh Vidyarthi, Joji Joseph, Siddharth S Desai, Sahil Bobade, Bharadwaj Amrutur</p>
+  <p><strong>Institution:</strong> Indian Institute of Science, Bangalore</p>
 
   <h2>Abstract</h2>
-  <p>We present a training-free pipeline that updates the pose of moving objects within a 3D Gaussian Splatting (3DGS) scene in real time using only a monocular RGB camera. The method avoids costly retraining by adjusting only the mean and orientation of the Gaussians belonging to dynamic objects, enabling low-latency digital twin updates for robotics, mixed reality, and industrial monitoring.</p>
+  <p>This work introduces a training-free method that updates the pose of moving objects in a static 3D Gaussian Splatting (3DGS) scene using only monocular RGB input. It preserves appearance fidelity by only modifying Gaussian positions and orientations, enabling fast and drift-free dynamic scene reconstruction suitable for real-time robotics and digital twin applications.</p>
 
-  <h2>Pipeline Overview</h2>
-  <img src="ex_03.jpg" alt="Pipeline Diagram">
-  <p class="caption">Figure 1: Overview of the proposed real-time 3DGS dynamic update pipeline.</p>
+  <h2>1. Introduction</h2>
+  <p>3D Gaussian Splatting (3DGS) offers real-time, high-fidelity 3D scene rendering by representing environments as millions of semantically enriched 3D Gaussians. However, its dynamic extensions require expensive retraining for each update. Our proposed pipeline overcomes this bottleneck by enabling selective, real-time pose updates for dynamic Gaussians, using a monocular camera and semantic segmentation.</p>
 
-  <h2>Semantic Embedding</h2>
-  <p>We use Gradient-Weighted Feature Back-Projection to embed semantic features into each 3D Gaussian. This enhances object detection and scene understanding during pose updates.</p>
+  <h2>2. Related Work</h2>
+  <p>We build upon recent advances in:</p>
+  <ul>
+    <li><strong>3D Gaussian Splatting</strong> for photorealistic rendering of static scenes</li>
+    <li><strong>Gradient Backprojection</strong> for infusing semantic features into Gaussians</li>
+    <li><strong>Dynamic 3DGS</strong> models which support temporally coherent dynamic reconstructions</li>
+  </ul>
 
-  <h2>Tracking Pipeline</h2>
-  <img src="final_output.png" alt="Tracking Pipeline">
-  <p class="caption">Figure 2: Pose adjustment using rendered and test-field views.</p>
+  <h2>3. Method I: Uplifting Pointmap Transform</h2>
+  <h3>3.1 Semantic Scene Initialization</h3>
+  <p>A multi-view image set is used to construct the static 3DGS scene. Gradient-Weighted Backprojection embeds semantic features into Gaussians. Dynamic elements are masked out based on class labels (e.g., person, robot).</p>
 
-  <h2>Examples of Real-Time Tracking</h2>
-  <img src="ex_01.png" alt="Person Tracking Example 1">
-  <img src="ex_02.jpg" alt="Person Tracking Example 2">
-  <img src="ex_03.drawio.png" alt="Person Tracking Example 3">
-  <img src="main_poinmap_flow.jpg" alt="Person and Robot Tracking">
+  <h3>3.2 Image-Based Object Tracking</h3>
+  <ul>
+    <li>Rendered and live monocular images are fed into YOLO for object detection</li>
+    <li>MoGe generates dense point maps for detected objects in both views</li>
+    <li>Point-based rigid body transform is estimated for each object</li>
+  </ul>
+
+  <h3>3.3 Pose-Only Update</h3>
+  <p>Estimated transform is scaled to match the 3DGS metric space and applied to dynamic Gaussians. Only position and orientation are updated, leaving appearance unchanged.</p>
+
+  <img src="main_poinmap_flow.jpg" alt="Pipeline Flow Diagram">
+  <p class="caption">Figure: Overall pipeline for monocular 3DGS update using pointmaps.</p>
+
+  <h2>4. Method II: Loss-Based Pose Estimation</h2>
+  <p>An alternative approach optimizes the test-camera pose directly in image space using photometric loss between rendered and live images. YOLO-filtered view sampling enhances gradient quality and robustness.</p>
+
+  <h2>5. Scale Recovery and Evaluation</h2>
+  <p>We investigate both isotropic and anisotropic scale calibration methods. Empirical results show that a neural-network-based anisotropic scale predictor improves alignment accuracy.</p>
+
   <img src="graph.jpg" alt="Accuracy Graph">
-  <p class="caption">Figure 3: Accuracy over time and qualitative examples of person and robot tracking.</p>
+  <p class="caption">Figure: Normalized Translation Error vs Time shows stability under Method II.</p>
 
-  <h2>Results</h2>
-  <p>The system achieves mean translational error of 52 cm for objects with 8.5 m displacement using only monocular input. The entire update loop runs in under 3.5 seconds on an RTX A6000 GPU.</p>
+  <h2>6. Results and Visualizations</h2>
+  <img src="ex_01.png">
+  <img src="ex_02.jpg">
+  <img src="ex_03.jpg">
+  <img src="final_output.png">
+  <p class="caption">Figure: Visual examples of person and robot tracking in real time.</p>
 
-  <h2>Conclusion</h2>
-  <p>This work shows that 3DGS can be extended for real-time, drift-free, and training-free tracking of dynamic objects using a single RGB camera, enabling high-fidelity dynamic digital twins for practical deployment.</p>
+  <h2>7. Qualitative Evaluation</h2>
+  <img src="ex_03.drawio.png">
+  <p class="caption">Figure: Multi-object tracking under indoor and outdoor conditions</p>
+
+  <h2>8. Conclusion</h2>
+  <p>This work demonstrates that real-time, training-free tracking of dynamic objects in a semantically enriched 3D Gaussian field is feasible with monocular RGB input. Our method preserves scene photorealism and semantic consistency, delivering low-latency performance suitable for real-world robotics and digital twin applications.</p>
 
 </body>
 </html>
