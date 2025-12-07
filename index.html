@@ -1,91 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Real-Time Dynamic 3DGS | Thesis Project</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Gaussian Splatting - Real-Time Pose Estimation</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 2rem;
-      line-height: 1.6;
+      margin: 40px auto;
       max-width: 1000px;
-      margin-left: auto;
-      margin-right: auto;
+      line-height: 1.6;
+      color: #222;
     }
     h1, h2, h3 {
-      color: #004080;
+      color: #003366;
     }
     img {
       max-width: 100%;
-      height: auto;
+      display: block;
       margin: 1rem 0;
       border: 1px solid #ddd;
     }
-    code {
-      background-color: #f3f3f3;
-      padding: 0.2em 0.4em;
-      font-family: monospace;
+    .caption {
+      font-size: 0.9em;
+      color: #666;
+      text-align: center;
+      margin-top: -10px;
     }
   </style>
 </head>
 <body>
-  <h1>3D Gaussian Splatting for Real-Time Tracking of Dynamic Objects Using a Monocular Camera</h1>
-  <p><strong>M.Tech Thesis – Indian Institute of Science (IISc), Bangalore</strong><br />
-    <strong>Author:</strong> Saurabh K R Vidyarthi</p>
+  <h1>3D Gaussian Splatting for Real-Time Pose Estimation and Tracking of Dynamic Objects</h1>
+  <p><strong>Authors:</strong> Saurabh Vidyarthi, Joji Joseph, Siddharth S Desai, Sahil Bobade, Bharadwaj Amrutur<br>
+  <strong>Institute:</strong> Indian Institute of Science, Bangalore, India</p>
 
-  <h2>Motivation and Problem</h2>
-  <p>
-    Static 3D scene representations are not sufficient for real-time robotic navigation and digital twins.
-    Existing methods for dynamic 3D scene reconstruction (e.g., dynamic 3D Gaussian Splatting) require
-    hours of retraining even for minor motion updates. This is not practical for real-world applications.
-  </p>
-
-  <h2>Key Idea</h2>
-  <p>
-    We propose a training-free method to update only the <strong>poses of dynamic Gaussians</strong> within a 3DGS scene
-    using monocular camera input. Appearance parameters are preserved. The update is fast and
-    runs in real time, creating a dynamic digital twin that can be used by mobile robots.
-  </p>
+  <h2>Abstract</h2>
+  <p>We present a training-free pipeline that updates the pose of moving objects within a 3D Gaussian Splatting (3DGS) scene in real time using only a monocular RGB camera. The method avoids costly retraining by adjusting only the mean and orientation of the Gaussians belonging to dynamic objects, enabling low-latency digital twin updates for robotics, mixed reality, and industrial monitoring.</p>
 
   <h2>Pipeline Overview</h2>
-  <img src="pipeline_diagram.png" alt="Pipeline Diagram" />
-  <p>
-    The pipeline includes semantic injection via Gradient Backprojection, object detection using YOLO,
-    monocular depth estimation via MoGe, and rigid-body transform computation to update only the dynamic
-    subset of Gaussians in real time.
-  </p>
+  <img src="ex_03.jpg" alt="Pipeline Diagram">
+  <p class="caption">Figure 1: Overview of the proposed real-time 3DGS dynamic update pipeline.</p>
 
-  <h2>Runtime Object Tracking</h2>
-  <ul>
-    <li><strong>YOLO</strong> is used to detect dynamic entities in both rendered and live camera frames.</li>
-    <li><strong>MoGe</strong> converts 2D detections to 3D point clouds.</li>
-    <li><strong>Rigid transformation</strong> is computed between point clouds and applied to corresponding Gaussians.</li>
-  </ul>
+  <h2>Semantic Embedding</h2>
+  <p>We use Gradient-Weighted Feature Back-Projection to embed semantic features into each 3D Gaussian. This enhances object detection and scene understanding during pose updates.</p>
+
+  <h2>Tracking Pipeline</h2>
+  <img src="final_output.png" alt="Tracking Pipeline">
+  <p class="caption">Figure 2: Pose adjustment using rendered and test-field views.</p>
+
+  <h2>Examples of Real-Time Tracking</h2>
+  <img src="ex_01.png" alt="Person Tracking Example 1">
+  <img src="ex_02.jpg" alt="Person Tracking Example 2">
+  <img src="ex_03.drawio.png" alt="Person Tracking Example 3">
+  <img src="main_poinmap_flow.jpg" alt="Person and Robot Tracking">
+  <img src="graph.jpg" alt="Accuracy Graph">
+  <p class="caption">Figure 3: Accuracy over time and qualitative examples of person and robot tracking.</p>
 
   <h2>Results</h2>
-  <img src="results_examples.png" alt="Qualitative Results" />
-  <p>
-    Updates complete within ~5 seconds per frame (on RTX A6000). No re-optimization of appearance.
-    Dynamic Gaussians remain visually aligned with real-world objects while static Gaussians are untouched.
-  </p>
+  <p>The system achieves mean translational error of 52 cm for objects with 8.5 m displacement using only monocular input. The entire update loop runs in under 3.5 seconds on an RTX A6000 GPU.</p>
 
-  <h2>Contributions</h2>
-  <ul>
-    <li>First real-time pose-only dynamic 3DGS pipeline requiring <strong>no retraining</strong></li>
-    <li>Semantic injection to isolate and track dynamic Gaussians only</li>
-    <li>Monocular 3D tracking using MoGe + YOLO</li>
-    <li>High-fidelity, drift-free dynamic updates for digital twin applications</li>
-  </ul>
+  <h2>Conclusion</h2>
+  <p>This work shows that 3DGS can be extended for real-time, drift-free, and training-free tracking of dynamic objects using a single RGB camera, enabling high-fidelity dynamic digital twins for practical deployment.</p>
 
-  <h2>Application Domains</h2>
-  <p>
-    Robotic navigation, factory automation, digital twins, AR/VR mixed reality, remote monitoring.
-  </p>
-
-  <p>
-    <em>To see code and source implementation, visit:</em><br />
-    <a href="https://github.com/Saurabh-Vidyarthi/thesis-3dgs">https://github.com/Saurabh-Vidyarthi/thesis-3dgs</a>
-  </p>
 </body>
 </html>
