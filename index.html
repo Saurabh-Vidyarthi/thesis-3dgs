@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -64,13 +64,7 @@
 
   <img src="main_poinmap_flow.jpg" alt="Pipeline Flow Diagram">
   <p class="caption">Figure: Overall pipeline for monocular 3DGS update using pointmaps.</p>
-
-
-  <!-- <h2>4. Scale Recovery and Evaluation</h2>
-  <p>We investigate both isotropic and anisotropic scale calibration methods. Empirical results show that a neural-network-based anisotropic scale predictor improves alignment accuracy.</p>
-
-  <img src="graph.jpg" alt="Accuracy Graph">
-  <p class="caption">Figure: Normalized Translation Error vs Time shows stability under Method II.</p> -->
+  
 
   <h2>5. Results and Visualizations</h2>
   <img src="ex_01.png">
@@ -86,9 +80,7 @@
     Your browser does not support the video tag.
   </video>
 </div>
-<!-- <p class="caption">Figure: Real-time tracking – initial vs. updated object pose in 3DGS.</p> -->
 
-  <!-- <h2>7. Qualitative Evaluation</h2> -->
   <img src="ex_03.drawio.png">
   <p class="caption">Figure: Multi-object tracking under indoor and outdoor conditions</p>
 
@@ -96,4 +88,263 @@
   <p>This work demonstrates that real-time, training-free tracking of dynamic objects in a semantically enriched 3D Gaussian field is feasible with monocular RGB input. Our method preserves scene photorealism and semantic consistency, delivering low-latency performance suitable for real-world robotics and digital twin applications.</p>
 
 </body>
+</html> -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Method I: Uplifting Pointmap Transform</title>
+  <!-- Embedded CSS for academic paper style -->
+  <style>
+    body {
+      font-family: Georgia, "Times New Roman", Times, serif;
+      margin: 2rem;
+      line-height: 1.6;
+      color: #000;
+      background: #fff;
+    }
+    h1, h2, h3 {
+      font-weight: normal;
+      text-align: center;
+      margin: 2rem 0 1rem;
+    }
+    h1 { font-size: 2em; }
+    h2 { font-size: 1.5em; }
+    h3 { font-size: 1.2em; }
+    p, li {
+      text-align: justify;
+      margin: 0.5em 0;
+    }
+    /* Two-column layout for wide screens */
+    .content {
+      column-count: 1;
+      column-gap: 2em;
+    }
+    @media screen and (min-width: 1200px) {
+      .content { column-count: 2; }
+      h1, h2, h3 { column-span: all; }  /* Headings span both columns */
+      figure { column-span: all; }     /* Figures span both columns */
+    }
+    /* Ensure figures and math block formulas are centered and responsive */
+    figure {
+      display: table;
+      text-align: center;
+      margin: 1.5em auto;
+      max-width: 100%;
+    }
+    figure img {
+      max-width: 100%;
+      height: auto;
+    }
+    figcaption {
+      font-size: 0.9em;
+      margin-top: 0.5em;
+      text-align: center;
+    }
+    /* Equation styling */
+    .equation {
+      text-align: center;
+      margin: 1em auto;
+      line-height: 1.3;
+      font-size: 1em;
+    }
+    .equation blockquote {
+      display: inline-block;
+      text-align: left;
+      margin: 0;
+    }
+    /* Tooltip styling for equation annotations (using title attribute) */
+    .tooltip:hover {
+      cursor: help;
+    }
+    /* Collapsible details for derivations */
+    details {
+      background: #f9f9f9;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 0.5em 1em;
+      margin: 1em 0;
+    }
+    details summary {
+      font-weight: bold;
+      cursor: pointer;
+      list-style: none;
+    }
+    details summary::-webkit-details-marker { display: none; }
+  </style>
+</head>
+<body>
+<div class="content">
+  <h1>Method I: Uplifting Pointmap Transform</h1>
+  <h2>Overview</h2>
+  <p>
+    <strong>Method I</strong> is a training-free pipeline that updates the poses of moving objects in a pre-built 
+    <em>3D Gaussian Splatting</em> (3DGS) scene in real time using only a monocular RGB camera. Starting from a static 3DGS model of the scene, 
+    the pipeline injects semantic information into each 3D Gaussian and then continuously tracks and adjusts any dynamic objects’ positions 
+    **without retraining the model**. Only the Gaussian means (positions) and orientations are altered during updates – color, opacity, and size 
+    remain untouched – making this a fast <em>pose-only</em> adjustment method. The result is a photorealistic and semantically-rich dynamic 
+    scene (a “dynamic digital twin”) that can be refreshed at interactive rates.
+  </p>
+  <p>The process for each video frame consists of the following stages:</p>
+  <ol>
+    <li><strong>Semantic Initialization:</strong> Reconstruct a static 3D scene as a 3D Gaussian point cloud and enrich it with semantic features. Gaussians belonging to movable classes (e.g. people, vehicles) are flagged as dynamic.</li>
+    <li><strong>Object Localization:</strong> Render the current 3D Gaussian scene to get a reference view, and capture the live camera frame. Use an object detector (YOLO) to find dynamic objects in both the rendered view and the live view.</li>
+    <li><strong>Pointmap Alignment:</strong> For each detected object, generate dense 3D point maps from the two views (using a monocular geometry module, MoGe). Compute the rigid-body transformation that best aligns the reference pointmap to the live pointmap.</li>
+    <li><strong>Pose Uplift &amp; Update:</strong> “Uplift” the estimated transformation into the 3D Gaussian scene’s coordinate system using a calibrated scale factor, then apply it to the corresponding Gaussians’ means and orientations. This updates the object’s pose in the scene instantly.</li>
+  </ol>
+  <figure>
+    <img src="main_pointmap_flow.jpg" alt="Pipeline of the Uplifting Pointmap Transform Method" />
+    <figcaption><em>Figure 1:</em> Overview of the Method I pipeline. A static 3D Gaussian scene is semantically annotated (semantic coloring of Gaussians), dynamic-object Gaussians are masked, and at run-time each frame’s live image is paired with a rendered view of the scene. Detected objects in both images are converted to pointmaps for alignment; the resulting transform is scaled and applied to the 3D Gaussian scene, updating only the means and orientations of the dynamic Gaussians.</figcaption>
+  </figure>
+
+  <h2>Semantic Initialization</h2>
+  <p>
+    The pipeline begins by building a high-fidelity <strong>static 3D Gaussian Splatting model</strong> of the scene using multi-view images (or video frames) of the static environment. This produces a set of Gaussians 
+    \( G = \{\!G_i\!\}_{i=1}^{N} \), each with a mean position \( \mu_i \in \mathbb{R}^3 \), covariance matrix \( \Sigma_i \) (defining its shape, scale, and orientation), color \( c_i \in \mathbb{R}^3 \), and opacity \( \alpha_i \in [0,1] \). 
+    The 3D Gaussian Splatting representation can render photorealistic images by “splatting” these Gaussians onto a 2D image plane and compositing their contributions along each camera ray. A simplified Gaussian rendering equation for a 2D pixel color \(C(x,y)\) is:
+  </p>
+  <div class="equation">
+    <blockquote>
+      <span class="tooltip" title="Color of Gaussian $n$">\(c_n\)</span>
+      <span class="tooltip" title="Opacity of Gaussian $n$ at $(x,y)$">\( \alpha_n(x,y)\)</span>
+      <span class="tooltip" title="Transmittance (unoccluded fraction) of Gaussian $n$ at $(x,y)$">\(T_n(x,y)\)</span>,
+    </blockquote>
+    <blockquote>
+      \( C(x,y) = \sum_{n=1}^{N} c_n\, \alpha_n(x,y)\, T_n(x,y), \) &nbsp; <em>(Eq. 1)</em>
+    </blockquote>
+  </div>
+  <p>
+    In this equation, \( \alpha_n(x,y) \) is the opacity contribution of the <em>n</em>-th Gaussian at pixel <em>(x,y)</em>, and \( T_n(x,y) \) is the transmittance (the fraction of light that reaches Gaussian <em>n</em> without being absorbed by closer Gaussians along the ray). Intuitively, each Gaussian contributes its color \(c_n\) to the pixel color, modulated by its opacity and by any occlusion/transparency from nearer Gaussians. 
+  </p>
+  <p>
+    Next, we enrich this static model with semantics using <strong>Gradient-Weighted Feature Backprojection</strong> (GWB). This technique injects high-level features (for example, semantic labels from a vision model) into each 3D Gaussian by projecting 2D image features back into the 3D space. We render the scene from several viewpoints and use a pretrained network (such as a segmentation or vision-language model) to extract 2D feature maps \(F^{2D}(x,y)\). GWB then accumulates these features into each Gaussian, weighted by the same factors that determine the Gaussian’s influence on each pixel. Specifically, the gradient of the rendering function with respect to a Gaussian’s color indicates that Gaussian’s importance for each pixel (from Equation 1):
+  </p>
+  <div class="equation">
+    <blockquote>
+      \( \frac{\partial C(x,y)}{\partial c_k} = \alpha_k(x,y)\, T_k(x,y), \) &nbsp; <em>(Eq. 2)</em>
+    </blockquote>
+  </div>
+  <p>
+    This term \( \alpha_k(x,y) T_k(x,y) \) serves as a per-pixel weight for Gaussian \(k\). Using these weights, the feature vector \(f_k\) for Gaussian \(k\) is computed as a weighted average of all pixel features that Gaussian influences:
+  </p>
+  <div class="equation">
+    <blockquote>
+      \( 
+      f_k \;=\; \frac{\sum_{(x,y,n)} F^{2D}_{(n)}(x,y)\; \alpha_k^{(n)}(x,y)\; T_k^{(n)}(x,y)}{\sum_{(x,y,n)} \alpha_k^{(n)}(x,y)\; T_k^{(n)}(x,y)}\,,
+      \) &nbsp; <em>(Eq. 3)</em>
+    </blockquote>
+  </div>
+  <p>
+    where the sum is taken over all pixels \((x,y)\) and all input views \(n\) used for backprojection. In essence, \(f_k\) is the feature (e.g. a semantic embedding) that best describes Gaussian \(k\), obtained by looking at how much each 2D feature contributes to it (weighted by rendering gradients). This method efficiently yields a <strong>photo-consistent and label-consistent 3D Gaussian scene</strong>, meaning the 3D representation now carries semantic information. We then identify which Gaussians correspond to potentially movable objects: for example, if the feature \(f_i\) of Gaussian \(i\) indicates classes like “person” or “vehicle,” we mark that Gaussian as dynamic. All Gaussians are thus split into a dynamic set \(G_{dyn}\) and static set \(G_{stat}\).
+  </p>
+
+  <h2>Object Tracking via Pointmap Alignment</h2>
+  <p>
+    Once the scene is initialized and dynamic Gaussians are known, the pipeline is ready to track object motion. For each new time step (video frame), we refresh the object’s pose without any global retraining. First, we obtain an <strong>image-space localization</strong> of the object. We render the current 3D Gaussian scene (with the last known positions of all Gaussians) to produce a reference image \(I_R\) at time \(t-1\). Simultaneously, we capture the live camera image \(I_T\) at time \(t\). An off-the-shelf object detector (e.g. YOLO) is applied to both images to find the bounding box or region of the dynamic object of interest. This gives us the object’s approximate 2D location in the rendered view (at \(t-1\)) and in the live view (at \(t\)).
+  </p>
+  <p>
+    Next, we convert these 2D detections into <strong>dense 3D pointmaps</strong> for alignment. Each detected region is fed into a <em>Monocular Geometry (MoGe)</em> module, which predicts depth or 3D coordinates for the object’s pixels using learned single-image depth cues. The outcome is a set of 3D points \(P_R = \{\mathbf{p}_{R}^{\,j}\}_{j=1}^{m}\) for the reference view and \(P_T = \{\mathbf{p}_{T}^{\,j}\}_{j=1}^{m}\) for the live view. These pointmaps are constructed such that there is a one-to-one correspondence between points in \(P_R\) and \(P_T\): each point \( \mathbf{p}_{R}^{\,j} \) corresponds to the exact same part of the object as point \( \mathbf{p}_{T}^{\,j} \), thanks to using the detector’s region (for example, by taking an evenly sampled set of pixels within the detection box in both images). This one-to-one mapping means we do not need to solve the data association problem – the points are already paired by construction.
+  </p>
+  <p>
+    Now the task is to find the <strong>rigid-body transform</strong> that best aligns the reference point set \(P_R\) to the live point set \(P_T\). We assume the object moves approximately as a rigid body between frames. The optimal transform is a rotation \(R_P \in \mathrm{SO}(3)\) and translation \(t_P \in \mathbb{R}^3\) that minimize the mean squared error between the transformed reference points and the target points:
+  </p>
+  <div class="equation">
+    <blockquote>
+      \( (R_P,\; t_P) \;=\; \arg\min_{R \in SO(3),\; t \in \mathbb{R}^3} \;\sum_{j=1}^{m} \big\|\, R\,\mathbf{p}_{R}^{\,j} + t \;-\; \mathbf{p}_{T}^{\,j} \,\big\|^2. \) &nbsp; <em>(Eq. 4)</em>
+    </blockquote>
+  </div>
+  <p>
+    This is the classic least-squares alignment problem for two point sets. It has a known closed-form solution: one can translate both point sets to their centroids, compute the correlation matrix between \(P_R\) and \(P_T\), and find the optimal rotation \(R_P\) via singular value decomposition (SVD) of this correlation matrix. The optimal translation \(t_P\) is then the difference between the centroid of \(P_T\) and the rotated centroid of \(P_R\).
+  </p>
+  <details>
+    <summary>Derivation of the Optimal Rigid Transform</summary>
+    <p>Let <em>$\bar{\mathbf{p}}_R$</em> and <em>$\bar{\mathbf{p}}_T$</em> be the centroids of the point sets <em>$P_R$</em> and <em>$P_T$</em>, respectively. Define centered points <em>$\mathbf{q}_R^j = \mathbf{p}_R^j - \bar{\mathbf{p}}_R$</em> and <em>$\mathbf{q}_T^j = \mathbf{p}_T^j - \bar{\mathbf{p}}_T$</em>. The least-squares objective can be expanded and simplified to</p>
+    <p style="text-align:center;"><em>$\sum_j \|R\,\mathbf{q}_R^j - \mathbf{q}_T^j\|^2 = \sum_j \|\mathbf{q}_R^j\|^2 + \|\mathbf{q}_T^j\|^2 - 2\,\mathrm{trace}(R^T H)$</em>,</p>
+    <p>where <em>$H = \sum_j \mathbf{q}_R^j {\mathbf{q}_T^j}^T$</em> is the cross-covariance matrix between the centered point sets. Minimizing this cost is equivalent to maximizing <em>$\mathrm{trace}(R^T H)$</em>. Using the SVD of <em>$H = U\,\Sigma\,V^T$</em>, the maximizer is <em>$R_P = V\,U^T$</em>. (If <em>$\det(R_P)=-1$</em>, one of the singular values is negated to enforce a proper rotation.) The translation is then <em>$t_P = \bar{\mathbf{p}}_T - R_P\,\bar{\mathbf{p}}_R$</em>. This solution gives the global minimum for Equation 4.</p>
+  </details>
+  <p>
+    After this step, we have recovered the 3D rigid motion of the object between the last frame and the current frame, but in the <em>pointmap’s coordinate system</em>. The transformation \(T_P = (R_P, t_P)\) tells us how the object moved in MoGe’s internal coordinate frame (which is defined up to scale).
+  </p>
+
+  <h2>Pose Uplift and Gaussian Update</h2>
+  <p>
+    To update the actual 3D Gaussian scene, we need to “<strong>uplift</strong>” this transform into the coordinate frame of the 3DGS model. In general, monocular depth or geometry predictions (like MoGe’s output) operate in a metric space that may not exactly match the scale of the true world or the pre-built scene. Thus, we apply a calibrated <strong>scale factor</strong> to the translation component. We assume that the scaling is uniform in all directions (anisotropic scaling is a more complex alternative, but Method I uses a single isotropic scale). Before running our pipeline, we can perform a one-time calibration by observing a known distance in both the 3D Gaussian scene and the MoGe pointmap. For example, if we know two static points in the scene (or a known object size), we can use them as landmarks.
+  </p>
+  <p>
+    Formally, let \( \mu_{\text{init}}, \mu_{\text{land}} \in \mathbb{R}^3 \) be the positions (in the 3DGS scene) of a particular landmark Gaussian at two different times, and \( p_{\text{init}}, p_{\text{land}} \in \mathbb{R}^3 \) be the corresponding 3D positions predicted by MoGe’s pointmap for that same physical point. We determine a scale factor \(s\) such that the distance moved in the pointmap matches the distance moved in the 3D scene:
+  </p>
+  <div class="equation">
+    <blockquote>
+      \( 
+      s \;=\; \frac{\big\|\mu_{\text{land}} - \mu_{\text{init}}\big\|_2}{\big\|\,p_{\text{land}} - p_{\text{init}}\,\big\|_2}\,,
+      \) &nbsp; <em>(Eq. 5)</em>
+    </blockquote>
+  </div>
+  <p>
+    In practice, we average such estimates over multiple static landmark pairs to obtain a robust scale. This single scalar \(s\) effectively compensates for any unit mismatch between the MoGe pointmaps and the 3D Gaussian scene. 
+  </p>
+  <p>
+    We can now construct the <strong>uplifted transform</strong> \(T_G\) that operates in the 3DGS space: 
+    \( T_G = (R_P,\; s\,t_P) \). The rotation is the same \(R_P\) we computed, and the translation is scaled by \(s\). We apply \(T_G\) to every Gaussian in the dynamic object’s set \(G_{dyn}\). Specifically, for each affected Gaussian \(G_j = (\mu_j, \Sigma_j, c_j, \alpha_j)\), we update its mean position and its orientation as:
+  </p>
+  <div class="equation">
+    <blockquote>
+      \( \mu'_j = R_P\,\mu_j + s\,t_P, \qquad \Sigma'_j = R_P\,\Sigma_j\,R_P^T\,.\)
+    </blockquote>
+  </div>
+  <p>
+    All other Gaussian attributes – color \(c_j\), opacity \(\alpha_j\), and the semantic feature vector \(f_j\) – remain unchanged. The position update \(\mu'_j\) shifts the Gaussian by the estimated object motion, and the covariance update \(\Sigma'_j = R_P\,\Sigma_j\,R_P^T\) rotates the Gaussian’s ellipsoid to maintain the object’s orientation. Importantly, the eigenvalues of \(\Sigma_j\) (which determine the Gaussian’s size) are preserved, meaning the object’s shape and volume stay the same. We have thus performed a pure pose update: moving and rotating the Gaussians of the object rigidly as a group.
+  </p>
+  <figure>
+    <img src="ex_01.png" alt="Dynamic object before and after pose update in the Gaussian scene" />
+    <figcaption><em>Figure 2:</em> A dynamic object’s Gaussians (highlighted) before and after the pose update. Only the means (positions) and orientations of these Gaussians change between frames – their colors, opacities, and sizes remain fixed. This enables real-time pose refresh without any time-consuming neural re-training.</figcaption>
+  </figure>
+  <p>
+    After applying the uplifted transform, the 3D Gaussian scene is immediately updated to reflect the object’s new pose at time \(t\). The entire pipeline from detection to Gaussian update is efficient, taking only a few seconds on modern hardware for a full scene update. Crucially, since no Gaussians are added or removed and their appearance properties are not re-optimized, the scene retains its photorealistic quality and semantic richness throughout.
+  </p>
+  <h2>Conclusion</h2>
+  <p>
+    Method I demonstrates that we can achieve <strong>real-time tracking of dynamic objects</strong> in a 3D Gaussian Splatting scene by leveraging 2D detections and pointmap alignment, rather than expensive full scene retraining. By updating only ~1% of the Gaussians (those belonging to moving entities) and keeping their colors and other properties fixed, the approach maintains visual fidelity (no blurring or loss of detail) while avoiding drift. This approach is ideal for applications like robotics and augmented reality, where a digital twin of the environment needs to be kept up-to-date with moving elements at low latency. 
+  </p>
+  <p>
+    In summary, <strong>Uplifting Pointmap Transform</strong> provides an academic yet practical solution to inject motion into static Gaussian splatting models. It turns static reconstructions into dynamic scenes on the fly, opening the door to interactive 4D modeling without the heavy cost of continuous re-training.
+  </p>
+</div>
+
+<!-- MathJax for rendering math equations -->
+<script async id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
 </html>
+
